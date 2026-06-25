@@ -1,60 +1,44 @@
 package com.autoqa.service;
 
 import com.autoqa.entity.MonitoredSite;
-import com.autoqa.entity.QaLog;
 import com.autoqa.repository.MonitoredSiteRepository;
-import com.autoqa.repository.QaLogRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class QaSchedulerService {
 
+    private static final Logger log = LoggerFactory.getLogger(QaSchedulerService.class);
+
     private final MonitoredSiteRepository siteRepository;
-    private final QaLogRepository qaLogRepository;
     private final QaExecutionService executionService;
 
-    public QaSchedulerService(MonitoredSiteRepository siteRepository, QaLogRepository qaLogRepository, QaExecutionService executionService) {
+    public QaSchedulerService(MonitoredSiteRepository siteRepository, QaExecutionService executionService) {
         this.siteRepository = siteRepository;
-        this.qaLogRepository = qaLogRepository;
         this.executionService = executionService;
     }
 
-    // Run this method exactly every 60,000 milliseconds 
+    // Run this method exactly every 60,000 milliseconds (1 minute)
     @Scheduled(fixedRate = 60000)
     public void evaluateAndRunDueTests() {
-        System.out.println("Scheduler waking up: Checking for due tests...");
+        log.debug("Scheduler waking up: Checking database for due tests...");
         
-        List<MonitoredSite> allSites = siteRepository.findAll();
-        LocalDateTime now = LocalDateTime.now();
+        // PostgreSQL does 100% of the work
+        List<MonitoredSite> dueSites = siteRepository.findSitesDueForScan();
 
-        for (MonitoredSite site : allSites) {
-            Optional<QaLog> lastLogOpt = qaLogRepository.findTopByMonitoredSiteOrderByExecutedAtDesc(site);
+        if (dueSites.isEmpty()) {
+            log.debug("No tests due at this time.");
+            return;
+        }
 
-            boolean isDue = false;
-
-            if (lastLogOpt.isEmpty()) {
-                isDue = true;
-                System.out.println(site.getName() + " is due (First time run).");
-            } else {
-                QaLog lastLog = lastLogOpt.get();
-                LocalDateTime lastRunTime = lastLog.getExecutedAt();
-                long minutesSinceLastRun = ChronoUnit.MINUTES.between(lastRunTime, now);
-
-                if (minutesSinceLastRun >= site.getScanFrequencyMinutes()) {
-                    isDue = true;
-                    System.out.println(site.getName() + " is due. (Last run " + minutesSinceLastRun + " mins ago).");
-                }
-            }
-
-            if (isDue) {
-                executionService.runVisualTest(site);
-            }
+        // Only process the sites that actually need it
+        for (MonitoredSite site : dueSites) {
+            log.info("Triggering scheduled test for: " + site.getName());
+            executionService.runScheduledVisualTest(site);
         }
     }
 }

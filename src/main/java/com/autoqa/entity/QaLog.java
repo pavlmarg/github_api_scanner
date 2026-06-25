@@ -1,10 +1,16 @@
 package com.autoqa.entity;
 
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "qa_logs")
+@Table(name = "qa_logs", indexes = {
+    @Index(name = "idx_qa_log_site_date", columnList = "monitored_site_id, executed_at DESC")
+})
 public class QaLog {
 
     @Id
@@ -13,6 +19,7 @@ public class QaLog {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "site_id", nullable = false)
+    @JsonIgnore
     private MonitoredSite monitoredSite;
 
     @Column(nullable = false)
@@ -71,7 +78,7 @@ public class QaLog {
         return visualDifferenceScore;
     }
 
-    public void setVisualDifferenceScore(Double visualDifferenceScore) {
+    public void setVisualDifferenceScore(double visualDifferenceScore) {
         this.visualDifferenceScore = visualDifferenceScore;
     }
 

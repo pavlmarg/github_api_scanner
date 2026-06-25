@@ -1,0 +1,1 @@
+ALTER TABLE monitored_sites ADD COLUMN is_testing BOOLEAN NOT NULL DEFAULT FALSE;

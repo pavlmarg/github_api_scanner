@@ -1,14 +1,18 @@
 package com.autoqa.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "monitored_sites")
+@Table(name = "monitored_sites", indexes = {
+    @Index(name = "idx_site_user", columnList = "user_id")
+})
 public class MonitoredSite {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) 
-    private Long site_id;
+    private Long id;
 
     @Column(nullable = false)
     private String name;
@@ -25,17 +29,25 @@ public class MonitoredSite {
     @Column(name = "baseline_screenshot_path")
     private String baselineScreenshotPath;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
+    private User user;
+
+    @Column(name = "is_testing", nullable = false)
+    private Boolean isTesting = false;
+
     public MonitoredSite() {
     }
 
     // GETTERS AND SETTERS
     
     public Long getId() {
-        return site_id;
+        return id;
     }
 
-    public void setId(Long site_id) {
-        this.site_id = site_id;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -76,5 +88,21 @@ public class MonitoredSite {
     
     public void setbaselineScreenshotPath(String baselineScreenshotPath) {
         this.baselineScreenshotPath = baselineScreenshotPath;
+    }
+
+    public User getUser() { 
+        return user; 
+    }
+
+    public void setUser(User user) {
+        this.user = user; 
+    }
+
+    public Boolean getIsTesting() {
+        return isTesting;
+    }
+
+    public void setIsTesting(Boolean isTesting) {
+        this.isTesting = isTesting;
     }
 }
