@@ -41,7 +41,10 @@ public class QaExecutionService {
         this.siteRepository = siteRepository;
     }
 
+    @Async("qaTaskExecutor")
     public void runVisualTest(MonitoredSite site) {
+        logg.info("{} spinning up Chrome for site: {}", Thread.currentThread().getName(), site.getName());
+
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--headless=new");
         options.addArguments("--window-size=1920,1080");
@@ -60,6 +63,35 @@ public class QaExecutionService {
             long startTime = System.currentTimeMillis();
             driver.get(site.getUrl());
             long endTime = System.currentTimeMillis();
+
+            logg.info("Injecting JS DOM payload to freeze dynamic content on: {}", site.getName());
+
+            // Smart JavaScript Payload to Avoid Displaying Ads etc
+            String jsPayload = 
+                "const style = document.createElement('style');" +
+                "style.innerHTML = `" +
+                "  * {" +
+                "    animation: none !important;" +
+                "    transition: none !important;" +
+                "    scroll-behavior: auto !important;" +
+                "    caret-color: transparent !important;" + 
+                "  }" +
+                "  iframe, video, [class*='ad'], [id*='ad'], [class*='banner'], [class*='carousel'], [class*='popup'] {" +
+                "    visibility: hidden !important;" +
+                "  }" +
+                "`;" +
+                "document.head.appendChild(style);" +
+                "document.querySelectorAll('video, audio').forEach(media => media.pause());";
+
+            // Execute the payload directly in the browser
+            ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(jsPayload);
+
+            // We give the browser a brief moment to render the newly injected CSS rules
+            try {
+                Thread.sleep(1500); 
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
 
             // Selenium takes the screenshot and saves it to a temporary hidden file
             File tempScreenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
@@ -149,12 +181,5 @@ public class QaExecutionService {
         log.setActualLoadTimeMs(20000); // Maxed out based on 20s limit
         log.setVisualDifferenceScore(100.0);
         qaLogRepository.save(log);
-    }
-
-    @Async("qaTaskExecutor")
-    public void runScheduledVisualTest(MonitoredSite site) {
-        // Makes sure the method runs on a background thread
-        logg.info("{} picking up scheduled test for: {}", Thread.currentThread().getName(), site.getName());
-        runVisualTest(site); 
     }
 }

@@ -34,17 +34,34 @@ public class MonitoredSiteService {
         return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Authenticated user not found in database"));
     }
 
-    // Only fetch sites belonging to the logged-in user!
+    // The Gatekeeper (IDOR Protection)
+    private MonitoredSite getOwnedSiteOrThrow(Long id) {
+        MonitoredSite site = siteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Site not found"));
+        
+        User currentUser = getAuthenticatedUser();
+        
+        // If the user attached to the site does NOT match the logged-in user, throw a 404 fake-out.
+        if (!site.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Site not found");
+        }
+        
+        return site;
+    }
+
     public List<MonitoredSite> getAllSites() {
         User currentUser = getAuthenticatedUser();
         return siteRepository.findByUser(currentUser);
     }
 
     public Optional<MonitoredSite> getSiteById(Long id) {
-        return siteRepository.findById(id);
+        try {
+            return Optional.of(getOwnedSiteOrThrow(id));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
-    // Attach the logged-in user to the new site before saving
     public MonitoredSite addSite(String urlString, Integer intervalMinutes) throws Exception {
         new URL(urlString).toURI();
 
@@ -63,54 +80,58 @@ public class MonitoredSiteService {
         return siteRepository.save(site);
     }
 
+    
     public MonitoredSite updateScanFrequency(Long id, int newFrequency) {
-        return siteRepository.findById(id).map(site -> {
-            site.setScanFrequencyMinutes(newFrequency);
-            return siteRepository.save(site);
-        }).orElseThrow(() -> new RuntimeException("Site not found"));
+        MonitoredSite site = getOwnedSiteOrThrow(id);
+        site.setScanFrequencyMinutes(newFrequency);
+        return siteRepository.save(site);
     }
 
+    
     @Transactional
     public void deleteSite(Long id) {
-        MonitoredSite site = siteRepository.findById(id).orElseThrow(() -> new RuntimeException("Site not found"));
+        MonitoredSite site = getOwnedSiteOrThrow(id);
         
         List<QaLog> attachedLogs = logRepository.findByMonitoredSiteOrderByExecutedAtDesc(site);
         
-        // Delete physical log diff images from the cloud
         for (QaLog log : attachedLogs) {
-            storageService.deleteScreenshot(log.getScreenshotPath());
+            if (log.getScreenshotPath() != null) {
+                storageService.deleteScreenshot(log.getScreenshotPath());
+            }
         }
         logRepository.deleteAll(attachedLogs); 
         
-        // Delete physical baseline image from the cloud
-        storageService.deleteScreenshot(site.getbaselineScreenshotPath());
+        if (site.getbaselineScreenshotPath() != null) {
+            storageService.deleteScreenshot(site.getbaselineScreenshotPath());
+        }
         
         siteRepository.delete(site); 
     }
 
+    
     public Page<QaLog> getLogsForSite(Long siteId, int page, int size) {
-        MonitoredSite site = siteRepository.findById(siteId)
-                .orElseThrow(() -> new RuntimeException("Site not found"));
-        
+        MonitoredSite site = getOwnedSiteOrThrow(siteId);
         return logRepository.findByMonitoredSiteOrderByExecutedAtDesc(site, PageRequest.of(page, size));
     }
 
+    
     @Transactional
     public MonitoredSite wipeBaseline(Long id) {
-        MonitoredSite site = siteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Site not found"));
+        MonitoredSite site = getOwnedSiteOrThrow(id);
 
         List<QaLog> attachedLogs = logRepository.findByMonitoredSiteOrderByExecutedAtDesc(site);
         
-        // Delete physical log diff images from the cloud
         for (QaLog log : attachedLogs) {
-            storageService.deleteScreenshot(log.getScreenshotPath());
+            if (log.getScreenshotPath() != null) {
+                storageService.deleteScreenshot(log.getScreenshotPath());
+            }
         }
         logRepository.deleteAll(attachedLogs);
 
-        // Delete physical baseline image from the cloud
-        storageService.deleteScreenshot(site.getbaselineScreenshotPath());
-        site.setbaselineScreenshotPath(null); 
+        if (site.getbaselineScreenshotPath() != null) {
+            storageService.deleteScreenshot(site.getbaselineScreenshotPath());
+            site.setbaselineScreenshotPath(null); 
+        }
         
         return siteRepository.save(site);
     }

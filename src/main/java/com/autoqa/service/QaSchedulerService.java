@@ -38,7 +38,7 @@ public class QaSchedulerService {
         // Only process the sites that actually need it
         for (MonitoredSite site : dueSites) {
             log.info("Triggering scheduled test for: " + site.getName());
-            executionService.runScheduledVisualTest(site);
+            executionService.runVisualTest(site);
         }
     }
 }

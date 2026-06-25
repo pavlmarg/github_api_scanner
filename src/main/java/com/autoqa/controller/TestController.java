@@ -76,7 +76,7 @@ public class TestController {
             MonitoredSite site = siteRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Site not found"));
 
-            // 1. Check the Lock BEFORE wiping data!
+            // Check the Lock BEFORE wiping data!
             if (Boolean.TRUE.equals(site.getIsTesting())) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body("A test is currently running for this site. Please wait.");
