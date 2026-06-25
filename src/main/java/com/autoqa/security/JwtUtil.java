@@ -14,7 +14,7 @@ import java.util.Date;
 public class JwtUtil {
 
     // Inject the secret with a built-in fallback for local development
-    @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
+    @Value("${jwt.secret}")
     private String secretKey;
 
     private final long EXPIRATION_TIME = 86400000; // 24 hours
