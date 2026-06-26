@@ -50,7 +50,7 @@ public class TestController {
     // Standard Manual Test
     @PostMapping("/sites/{id}/run")
     public ResponseEntity<?> runTestForSite(@PathVariable Long id) {
-        MonitoredSite site = siteRepository.findById(id).orElse(null);
+        MonitoredSite site = siteService.getSiteById(id).orElse(null);
         
         if (site == null) {
             return ResponseEntity.notFound().build();
@@ -73,7 +73,7 @@ public class TestController {
     @PostMapping("/sites/{id}/reset")
     public ResponseEntity<?> resetBaselineAndRun(@PathVariable Long id) {
         try {
-            MonitoredSite site = siteRepository.findById(id)
+            MonitoredSite site = siteService.getSiteById(id)
                     .orElseThrow(() -> new RuntimeException("Site not found"));
 
             // Check the Lock BEFORE wiping data!

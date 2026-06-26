@@ -168,7 +168,7 @@ public class QaExecutionService {
 
             site.setIsTesting(false);
             siteRepository.save(site);
-            logg.info("Released idempotency lock for site: {}", site.getName());
+            logg.info("Released site from testing mode: {}", site.getName());
         }
     }
 
@@ -178,7 +178,7 @@ public class QaExecutionService {
         log.setMonitoredSite(site);
         log.setStatus("FAIL");
         log.setExecutedAt(LocalDateTime.now());
-        log.setActualLoadTimeMs(20000); // Maxed out based on 20s limit
+        log.setActualLoadTimeMs(20000);
         log.setVisualDifferenceScore(100.0);
         qaLogRepository.save(log);
     }
