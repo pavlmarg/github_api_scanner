@@ -37,6 +37,10 @@ public class MonitoredSite {
     @Column(name = "is_testing", nullable = false)
     private Boolean isTesting = false;
 
+    @Version
+    @Column(name = "Version")
+    private Long version;
+
     public MonitoredSite() {
     }
 
@@ -104,5 +108,13 @@ public class MonitoredSite {
 
     public void setIsTesting(Boolean isTesting) {
         this.isTesting = isTesting;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }
