@@ -29,7 +29,7 @@ const handleSubmit = async (e) => {
     }
 
     
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&^_-]{8,20}$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,20}$/;
     if (!passwordRegex.test(password)) {
       setError("Password must be 8-20 characters and contain at least one letter and one number.");
       return;
@@ -44,18 +44,13 @@ const handleSubmit = async (e) => {
     setIsLoading(true);
 
     try {
-      const data = await apiFetch('/auth/register', {
+      await apiFetch('/auth/register', {
         method: 'POST',
         body: { email, password, confirmPassword }
       });
 
-      if (data.token) {
-        login(data.token);
-      }
-      navigate('/dashboard');
+      navigate('/login');
     } catch (err) {
-      // 3. CATCH BACKEND ERRORS (e.g., "Email already exists")
-      // err.message comes directly from what Spring Boot returns!
       setError(err.message || "Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);

@@ -1,44 +1,27 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useContext, useCallback } from 'react';
 
-// Create the Context
 const AuthContext = createContext();
 
-// Build the Provider Component
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
 
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
+  const login = useCallback((newToken) => {
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
   }, []);
 
-  const login = (newToken) => {
-    localStorage.setItem('token', newToken); 
-    setToken(newToken);                     
-  };
-
-  
-  const logout = () => {
-    localStorage.removeItem('token');      
-    setToken(null);                         
-  };
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    setToken(null);
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ 
-        token, 
-        isAuthenticated: !!token, 
-        login, 
-        logout 
-    }}>
+    <AuthContext.Provider value={{ token, isAuthenticated: !!token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Export a Custom Hook for easy usage
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
