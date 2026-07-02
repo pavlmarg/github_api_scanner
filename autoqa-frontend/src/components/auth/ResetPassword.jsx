@@ -31,16 +31,24 @@ const ResetPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
+    setStatus('idle');
 
     if (password !== confirmPassword) {
+      setStatus('error'); // <-- ADD THIS LINE!
       setErrorMessage("Passwords do not match.");
+      return;
+    }
+
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&^_-]{8,20}$/;
+    if (!passwordRegex.test(password)) {
+      setStatus('error'); // <-- ADD THIS LINE!
+      setErrorMessage("Password must be 8-20 characters and contain at least one letter and one number.");
       return;
     }
 
     setStatus('loading');
 
     try {
-      // Assuming your Spring Boot endpoint is /auth/reset-password
       await apiFetch('/auth/reset-password', {
         method: 'POST',
         body: { token, newPassword: password, confirmNewPassword: confirmPassword }
@@ -48,7 +56,6 @@ const ResetPassword = () => {
       
       setStatus('success');
       
-      // Send them to login after 3 seconds
       setTimeout(() => {
         navigate('/login');
       }, 3000);

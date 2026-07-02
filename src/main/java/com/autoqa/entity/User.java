@@ -2,13 +2,17 @@ package com.autoqa.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import java.util.ArrayList;
 import java.util.List;
+
 
 @Entity
 @Table(name = "users", indexes = {
     @Index(name = "idx_user_email", columnList = "email", unique = true)
 })
+
 public class User {
 
     @Id
@@ -27,6 +31,9 @@ public class User {
     @JsonIgnore 
     private List<MonitoredSite> sites = new ArrayList<>();
 
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider = AuthProvider.LOCAL;
+
     // --- Getters and Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -36,4 +43,6 @@ public class User {
     public void setPassword(String password) { this.password = password; }
     public List<MonitoredSite> getSites() { return sites; }
     public void setSites(List<MonitoredSite> sites) { this.sites = sites; }
+    public AuthProvider getProvider() { return provider; }
+    public void setProvider(AuthProvider provider) { this.provider = provider; }
 }

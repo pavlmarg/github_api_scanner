@@ -16,21 +16,37 @@ const Signup = () => {
   const { login } = useAuth();
 
   // 2. The Submission Handler
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    // 1. FRONTEND VALIDATION
+    // Basic email regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&^_-]{8,20}$/;
+    if (!passwordRegex.test(password)) {
+      setError("Password must be 8-20 characters and contain at least one letter and one number.");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
 
+    // 2. BACKEND API CALL
     setIsLoading(true);
 
     try {
       const data = await apiFetch('/auth/register', {
         method: 'POST',
-        body: { email, password }
+        body: { email, password, confirmPassword }
       });
 
       if (data.token) {
@@ -38,7 +54,9 @@ const Signup = () => {
       }
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || "Failed to create account.");
+      // 3. CATCH BACKEND ERRORS (e.g., "Email already exists")
+      // err.message comes directly from what Spring Boot returns!
+      setError(err.message || "Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -47,7 +65,7 @@ const Signup = () => {
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       setIsLoading(true);
-      const data = await apiFetch('/auth/google', {
+      const data = await apiFetch('/auth/google/signup', {
         method: 'POST',
         body: { 
           tokenId: credentialResponse.credential

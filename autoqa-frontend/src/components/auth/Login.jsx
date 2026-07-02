@@ -38,7 +38,7 @@ const Login = () => {
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       setIsLoading(true);
-      const data = await apiFetch('/auth/google', {
+      const data = await apiFetch('/auth/google/login', {
         method: 'POST',
         body: { 
           tokenId: credentialResponse.credential
@@ -84,7 +84,7 @@ const Login = () => {
               onError={() => setError("Google Login was closed or failed.")} 
               theme="outline"
               size="large"
-              text="signin_with"
+              text="Login_with"
               width="320"
             />
           </div>
