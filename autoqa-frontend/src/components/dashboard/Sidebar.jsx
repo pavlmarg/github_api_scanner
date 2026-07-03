@@ -1,14 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../../api/fetchClient';
 
 const Sidebar = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  
+  // State to hold the real data
+  const [sites, setSites] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // The mock data is completely removed. 
-  // We will populate this array later via a PostgreSQL fetch call.
-  const sites = [];
+  // Fetch sites on mount
+  useEffect(() => {
+    const loadSites = async () => {
+      try {
+        const data = await apiFetch('/sites'); 
+        setSites(data);
+      } catch (error) {
+        console.error("Failed to load sites:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSites();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -19,7 +36,6 @@ const Sidebar = () => {
   const hasMoreSites = sites.length > 5;
 
   return (
-    // Added rounded-r-[2.5rem] for a distinct, organic curve
     <aside className="w-72 h-screen bg-gradient-to-br from-brand-400 to-brand-600 text-white flex flex-col shadow-2xl flex-shrink-0 z-20 rounded-r-[2.5rem]">
       
       {/* Header / Logo Area */}
@@ -34,17 +50,14 @@ const Sidebar = () => {
 
       {/* Sites List */}
       <div className="flex-1 overflow-y-auto px-4 py-2 mt-2 space-y-3 custom-scrollbar">
-        
-        {/* WARMER FONT: Swapped to a soft serif and removed uppercase */}
         <div className="text-orange-50 text-sm font-serif italic mb-4 ml-2">
           Recent Sites
         </div>
         
-        {/* Safety Net: Empty State rendering */}
-        {recentSites.length === 0 ? (
-          <div className="text-white/60 text-sm px-2">
-            No sites added yet.
-          </div>
+        {isLoading ? (
+          <div className="text-white/60 text-sm px-2 animate-pulse">Loading projects...</div>
+        ) : recentSites.length === 0 ? (
+          <div className="text-white/60 text-sm px-2">No sites added yet.</div>
         ) : (
           recentSites.map((site) => (
             <Link
@@ -58,14 +71,14 @@ const Sidebar = () => {
                 </svg>
               </div>
               <div className="truncate">
-                <p className="text-sm font-bold text-white truncate">{site.name}</p>
-                <p className="text-xs text-brand-100 truncate mt-0.5">{site.url}</p>
+                {/* Adjust site.name or site.url based on your actual MonitoredSiteDto */}
+                <p className="text-sm font-bold text-white truncate">{site.url.replace(/^https?:\/\//, '')}</p>
+                <p className="text-xs text-brand-100 truncate mt-0.5">Every {site.scanFrequencyMinutes} mins</p>
               </div>
             </Link>
           ))
         )}
 
-        {/* Conditional View More Button */}
         {hasMoreSites && (
           <Link
             to="/sites"
@@ -91,7 +104,6 @@ const Sidebar = () => {
           Log Out
         </button>
       </div>
-
     </aside>
   );
 };
