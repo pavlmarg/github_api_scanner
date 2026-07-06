@@ -7,6 +7,7 @@ import Dashboard from './components/dashboard/Dashboard';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Sites from './components/dashboard/Sites';
 import SiteDetails from './components/dashboard/SiteDetails';
+import ReportDetails from './components/dashboard/ReportDetails';
 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>}/>
       <Route path="/sites" element={<ProtectedRoute><Sites /></ProtectedRoute>} />
       <Route path="/sites/:id" element={<ProtectedRoute><SiteDetails /></ProtectedRoute>} />
+      <Route path="/reports/:id" element={<ProtectedRoute><ReportDetails /></ProtectedRoute>} />
 
       <Route path="/" element={<Navigate to="/signup" replace />} />
     </Routes>

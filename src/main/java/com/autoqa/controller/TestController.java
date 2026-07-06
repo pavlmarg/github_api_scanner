@@ -174,4 +174,14 @@ public class TestController {
             return ResponseEntity.badRequest().body("Failed to delete report: " + e.getMessage());
         }
     }
+
+    @GetMapping("/logs/{id}")
+    public ResponseEntity<?> getLogById(@PathVariable Long id) {
+        try {
+            com.autoqa.entity.QaLog log = siteService.getLogById(id); 
+            return ResponseEntity.ok(new QaLogDto(log));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

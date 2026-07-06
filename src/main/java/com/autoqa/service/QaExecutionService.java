@@ -106,7 +106,7 @@ public class QaExecutionService {
             // Do we have a baseline?
             if (site.getbaselineScreenshotPath() == null) {
                 site.setbaselineScreenshotPath(actualImageUrl);
-                siteRepository.save(site);
+                site = siteRepository.save(site);
 
                 log.setStatus("BASELINE_CREATED");
                 log.setScreenshotPath(actualImageUrl);
@@ -166,8 +166,11 @@ public class QaExecutionService {
                 }
             }
 
-            site.setIsTesting(false);
-            siteRepository.save(site);
+            siteRepository.findById(site.getId()).ifPresent(freshSite -> {
+                freshSite.setIsTesting(false);
+                // freshSite.setTestStartedAt(null);
+                siteRepository.save(freshSite);
+            });
             logg.info("Released site from testing mode: {}", site.getName());
         }
     }

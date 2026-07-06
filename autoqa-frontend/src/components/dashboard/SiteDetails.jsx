@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { apiFetch } from '../../api/fetchClient';
@@ -23,12 +23,60 @@ const SiteDetails = () => {
   const itemsPerPage = 10;
 
   // --- Date Formatter Fix ---
+  const pollIntervalRef = useRef(null);
+
+    const clearPolling = () => {
+    if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+        }
+    };
+
+    const startPollingForCompletion = () => {
+    clearPolling();
+    const startTime = Date.now();
+
+    pollIntervalRef.current = setInterval(async () => {
+        try {
+            const freshSite = await apiFetch(`/test/sites/${id}`);
+
+      if (!freshSite.isTesting) {
+        clearPolling();
+        setSite(freshSite);
+        await loadSiteData(); 
+        setIsProcessing(false);
+        return;
+      }
+
+      if (Date.now() - startTime > 60000) {
+            clearPolling();
+            setIsProcessing(false);
+            setSite((prev) => ({ ...prev, isTesting: false }));
+            alert("There was an error running the test. Please try again.");
+        }
+        } catch (err) {
+            clearPolling();
+            setIsProcessing(false);
+        }
+        }, 2000);
+    };
+
+// Clean up on unmount
+    useEffect(() => clearPolling, []);
+
+// Pick up an already-stuck test on page load (e.g. server crash mid-run)
+    useEffect(() => {
+    if (site?.isTesting && !pollIntervalRef.current) {
+            setIsProcessing(true);
+            startPollingForCompletion();
+        }
+    }, [site?.isTesting]);
+
   const formatReportDate = (dateVal) => {
     if (!dateVal) return 'Unknown Date';
-    // If Spring Boot sent an array like [2026, 7, 6, 15, 30]
+    
     if (Array.isArray(dateVal)) {
       const [year, month, day, hour = 0, minute = 0, second = 0] = dateVal;
-      // JS Date months are 0-indexed, so we do month - 1
       return new Date(year, month - 1, day, hour, minute, second).toLocaleString();
     }
     // If it's a standard string
@@ -67,31 +115,31 @@ const SiteDetails = () => {
   const currentReports = reports.slice(startIndex, startIndex + itemsPerPage);
 
   // --- Actions ---
-  const handleCheckNow = async () => {
-    if (limitReached) return;
-    setIsProcessing(true);
-    try {
-      await apiFetch(`/test/sites/${id}/run`, { method: 'POST' });
-      await loadSiteData();
-    } catch (err) {
-      alert("Failed to start scan (Is it stuck testing?): " + err.message);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+const handleCheckNow = async () => {
+  if (limitReached) return;
+  setIsProcessing(true);
+  try {
+    const updatedSite = await apiFetch(`/test/sites/${id}/run`, { method: 'POST' });
+    setSite(updatedSite);
+    startPollingForCompletion();
+  } catch (err) {
+    alert("Failed to start scan (Is it stuck testing?): " + err.message);
+    setIsProcessing(false);
+  }
+};
 
-  const handleResetBaseline = async () => {
-    if (!window.confirm("This will set the latest successful scan as the new baseline and DELETE all previous reports. Are you sure?")) return;
-    setIsProcessing(true);
-    try {
-      await apiFetch(`/test/sites/${id}/reset`, { method: 'POST' });
-      await loadSiteData();
-    } catch (err) {
-      alert("Failed to reset baseline: " + err.message);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+const handleResetBaseline = async () => {
+  if (!window.confirm("This will set the latest successful scan as the new baseline and DELETE all previous reports. Are you sure?")) return;
+  setIsProcessing(true);
+  try {
+    const updatedSite = await apiFetch(`/test/sites/${id}/reset`, { method: 'POST' });
+    setSite(updatedSite);
+    startPollingForCompletion();
+  } catch (err) {
+    alert("Failed to reset baseline: " + err.message);
+    setIsProcessing(false);
+  }
+};
 
   const handleTogglePause = async () => {
     setIsProcessing(true);
@@ -137,8 +185,7 @@ const SiteDetails = () => {
   };
 
   const handleDeleteReport = async (report) => {
-    // Determine if it is the baseline (Assuming you have an isBaseline flag, or if difference is 0)
-    const isBaseline = report.isBaseline === true || report.differencePercentage === 0;
+    const isBaseline = report.status === 'BASELINE_CREATED';
 
     if (isBaseline) {
       if (window.confirm("WARNING: This report is a BASELINE. Deleting it will delete the entire site project. Do you want to proceed?")) {
@@ -197,11 +244,11 @@ const SiteDetails = () => {
             </div>
             
             <div className="flex flex-wrap gap-3">
-              <button onClick={handleCheckNow} disabled={isProcessing || limitReached} className="px-5 py-2.5 bg-brand-500 text-white font-bold rounded-xl shadow-md hover:bg-brand-600 active:scale-95 transition-all disabled:opacity-50">
-                Check Now
+              <button onClick={handleCheckNow} disabled={isProcessing || limitReached || site.isTesting} className="px-5 py-2.5 bg-brand-500 text-white font-bold rounded-xl shadow-md hover:bg-brand-600 active:scale-95 transition-all disabled:opacity-50">
+                    {site.isTesting ? 'Test Running...' : 'Check Now'}
               </button>
-              <button onClick={handleResetBaseline} disabled={isProcessing} className="px-5 py-2.5 bg-white border-2 border-brand-200 text-brand-700 font-bold rounded-xl hover:bg-brand-50 transition-all">
-                Set New Baseline
+              <button onClick={handleResetBaseline} disabled={isProcessing || site.isTesting} className="px-5 py-2.5 bg-white border-2 border-brand-200 text-brand-700 font-bold rounded-xl hover:bg-brand-50 transition-all disabled:opacity-50">
+                    Set New Baseline
               </button>
             </div>
           </div>
@@ -244,35 +291,32 @@ const SiteDetails = () => {
                 <div className="p-16 flex flex-col items-center text-center text-gray-500 font-medium">No reports generated yet.</div>
               ) : (
                 currentReports.map((report) => {
-                  
-                  // Logic to determine badge presentation
-                  const isBaseline = report.isBaseline === true || report.differencePercentage === 0;
-                  const isPass = report.status === 'PASSED';
-                  
-                  return (
-                    <div key={report.id} className="p-5 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-3 h-3 rounded-full ${isPass ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                const isBaseline = report.status === 'BASELINE_CREATED';
+                const isPass = report.status === 'PASS';
+                const matchPercent = (100 - report.visualDifferenceScore).toFixed(2);
+
+                return (
+                <div key={report.id} className="p-5 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-4">
+                        <div className={`w-3 h-3 rounded-full ${isBaseline ? 'bg-blue-500' : isPass ? 'bg-green-500' : 'bg-red-500'}`}></div>
                         <div>
-                          <p className="font-bold text-gray-900 flex items-center gap-2">
+                        <p className="font-bold text-gray-900 flex items-center gap-2">
                             Scan #{report.id}
-                            
-                            {/* DYNAMIC BADGE */}
                             {isBaseline ? (
-                              <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md font-bold tracking-wider">BASELINE</span>
-                            ) : (
-                              <span className={`text-xs px-2 py-0.5 rounded-md font-bold ${isPass ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                {isPass ? '100% Match' : `${report.differencePercentage}% Match`}
-                              </span>
+                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md font-bold tracking-wider">BASELINE</span>
+                        ) : (
+                                <span className={`text-xs px-2 py-0.5 rounded-md font-bold ${isPass ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                    {matchPercent}% Match
+                                </span>
                             )}
-                          </p>
-                          <p className="text-sm text-gray-500 mt-0.5">{formatReportDate(report.createdAt)}</p>
+                        </p>
+                            <p className="text-sm text-gray-500 mt-0.5">{formatReportDate(report.executedAt)}</p>
                         </div>
-                      </div>
+                    </div>
                       
                       <div className="flex items-center gap-6">
                         <Link to={`/reports/${report.id}`} className="text-sm font-bold text-brand-600 hover:text-brand-800">
-                          View Diff &rarr;
+                          View Report &rarr;
                         </Link>
                         
                         {/* DELETE REPORT BUTTON */}

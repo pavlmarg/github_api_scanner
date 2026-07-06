@@ -136,6 +136,27 @@ public class MonitoredSiteService {
         return siteRepository.save(site);
     }
 
+    @Transactional
+    public void deleteLog(Long logId) {
+        QaLog log = logRepository.findById(logId).orElseThrow(() -> new RuntimeException("Log not found"));
+
+        getOwnedSiteOrThrow(log.getMonitoredSite().getId());
+
+        if (log.getScreenshotPath() != null) {
+            storageService.deleteScreenshot(log.getScreenshotPath());
+        }
+
+        logRepository.delete(log);
+    }
+
+    public QaLog getLogById(Long logId) {
+        QaLog log = logRepository.findById(logId).orElseThrow(() -> new RuntimeException("Report not found with ID: " + logId));
+
+        getOwnedSiteOrThrow(log.getMonitoredSite().getId());
+
+        return log;
+    }
+
     // Pauses automated testing for a specific site
     public MonitoredSite pauseSite(Long id) {
         MonitoredSite site = getSiteById(id)
