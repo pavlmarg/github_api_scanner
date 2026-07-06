@@ -41,6 +41,9 @@ public class MonitoredSite {
     @Column(name = "Version")
     private Long version;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     public MonitoredSite() {
     }
 
@@ -116,5 +119,13 @@ public class MonitoredSite {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 }

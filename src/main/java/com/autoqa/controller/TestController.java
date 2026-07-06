@@ -36,6 +36,13 @@ public class TestController {
         return siteService.getAllSites().stream().map(MonitoredSiteDto::new).collect(Collectors.toList());
     }
 
+    @GetMapping("/sites/{id}")
+    public ResponseEntity<MonitoredSiteDto> getSiteById(@PathVariable Long id) {
+        return siteService.getSiteById(id)
+                .map(site -> ResponseEntity.ok(new MonitoredSiteDto(site)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping("/sites")
     public ResponseEntity<?> addNewSite(@RequestBody SiteCreateRequest request) {
         try {
@@ -134,6 +141,37 @@ public class TestController {
             return ResponseEntity.ok(dtoPage);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/sites/{id}/pause")
+    public ResponseEntity<?> pauseTesting(@PathVariable Long id) {
+        try {
+            MonitoredSite updatedSite = siteService.pauseSite(id);
+            return ResponseEntity.ok(new MonitoredSiteDto(updatedSite));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/sites/{id}/resume")
+    public ResponseEntity<?> resumeTesting(@PathVariable Long id) {
+        try {
+            MonitoredSite updatedSite = siteService.resumeSite(id);
+            return ResponseEntity.ok(new MonitoredSiteDto(updatedSite));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/sites/{siteId}/logs/{logId}")
+    public ResponseEntity<?> deleteLog(@PathVariable Long siteId, @PathVariable Long logId) {
+        try {
+            // Assuming your siteService has logic to delete a specific QaLog
+            siteService.deleteLog(logId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to delete report: " + e.getMessage());
         }
     }
 }

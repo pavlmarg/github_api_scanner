@@ -135,4 +135,23 @@ public class MonitoredSiteService {
         
         return siteRepository.save(site);
     }
+
+    // Pauses automated testing for a specific site
+    public MonitoredSite pauseSite(Long id) {
+        MonitoredSite site = getSiteById(id)
+                .orElseThrow(() -> new RuntimeException("Site not found with ID: " + id));
+        
+        // Ensure your MonitoredSite entity has a boolean field named 'isActive' or 'active'
+        site.setIsActive(false); 
+        return siteRepository.save(site);
+    }
+
+    // Resumes automated testing for a specific site
+    public MonitoredSite resumeSite(Long id) {
+        MonitoredSite site = getSiteById(id)
+                .orElseThrow(() -> new RuntimeException("Site not found with ID: " + id));
+        
+        site.setIsActive(true);
+        return siteRepository.save(site);
+    }
 }

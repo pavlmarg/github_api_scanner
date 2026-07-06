@@ -23,6 +23,7 @@ public interface MonitoredSiteRepository extends JpaRepository<MonitoredSite, Lo
         "  GROUP BY site_id" +
         ") latest ON ms.id = latest.site_id " +
         "WHERE ms.is_testing = false " + 
+        "AND ms.is_active = true " +
         "AND (latest.last_run IS NULL " + 
         "OR latest.last_run <= (NOW() - (ms.scan_frequency_minutes * INTERVAL '1 minute')))",
         nativeQuery = true)

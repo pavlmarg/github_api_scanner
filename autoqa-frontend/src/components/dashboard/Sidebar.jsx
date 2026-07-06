@@ -15,7 +15,7 @@ const Sidebar = () => {
   useEffect(() => {
     const loadSites = async () => {
       try {
-        const data = await apiFetch('/sites'); 
+        const data = await apiFetch('/test/sites'); 
         setSites(data);
       } catch (error) {
         console.error("Failed to load sites:", error);
@@ -80,10 +80,7 @@ const Sidebar = () => {
         )}
 
         {hasMoreSites && (
-          <Link
-            to="/sites"
-            className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-white border-2 border-white/20 hover:bg-white/10 transition-colors"
-          >
+          <Link to="/sites" className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-white border-2 border-white/20 hover:bg-white/10 transition-colors">
             View All Sites
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />

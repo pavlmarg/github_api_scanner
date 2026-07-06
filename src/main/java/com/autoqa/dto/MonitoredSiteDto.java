@@ -9,6 +9,7 @@ public class MonitoredSiteDto {
     private Integer scanFrequencyMinutes;
     private String baselineScreenshotPath;
     private Boolean isTesting;
+    private Boolean isActive;
 
     public MonitoredSiteDto(MonitoredSite site) {
         this.id = site.getId();
@@ -17,6 +18,7 @@ public class MonitoredSiteDto {
         this.scanFrequencyMinutes = site.getScanFrequencyMinutes();
         this.baselineScreenshotPath = site.getbaselineScreenshotPath();
         this.isTesting = site.getIsTesting();
+        this.isActive = site.getIsActive();
     }
 
     public Long getId() {
@@ -59,11 +61,19 @@ public class MonitoredSiteDto {
         this.baselineScreenshotPath = baselineScreenshotPath;
     }
 
-    public Boolean getTesting() {
+    public Boolean getIsTesting() {
         return isTesting;
     }
 
-    public void setTesting(Boolean testing) {
+    public void setIsTesting(Boolean testing) {
         isTesting = testing;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 }

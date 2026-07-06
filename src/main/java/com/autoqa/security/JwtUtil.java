@@ -7,11 +7,17 @@ import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.autoqa.service.QaExecutionService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
+
+    private static final Logger logg = LoggerFactory.getLogger(QaExecutionService.class);
 
     // Inject the secret with a built-in fallback for local development
     @Value("${jwt.secret}")
@@ -47,13 +53,10 @@ public class JwtUtil {
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    // Use the persistent key to validate the signature
-                    .setSigningKey(getSignInKey())
-                    .build()
-                    .parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(getSignInKey()).build().parseClaimsJws(token);
             return true;
         } catch (Exception e) {
+            logg.error("JWT validation failed: {}", e.getMessage());
             return false;
         }
     }

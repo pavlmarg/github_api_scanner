@@ -19,7 +19,7 @@ const Dashboard = () => {
   useEffect(() => {
     const loadSites = async () => {
       try {
-        const data = await apiFetch('/sites'); 
+        const data = await apiFetch('/test/sites'); 
         setSites(data);
       } catch (err) {
         console.error("Failed to fetch sites:", err);
@@ -56,7 +56,7 @@ const Dashboard = () => {
         scanFrequencyMinutes: freqNum
       };
 
-      await apiFetch('/sites', {
+      await apiFetch('/test/sites', {
         method: 'POST',
         body: payload
       });

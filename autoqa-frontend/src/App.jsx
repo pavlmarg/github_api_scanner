@@ -5,6 +5,9 @@ import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
 import Dashboard from './components/dashboard/Dashboard';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import Sites from './components/dashboard/Sites';
+import SiteDetails from './components/dashboard/SiteDetails';
+
 
 function App() {
   return (
@@ -13,15 +16,9 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>}/>
+      <Route path="/sites" element={<ProtectedRoute><Sites /></ProtectedRoute>} />
+      <Route path="/sites/:id" element={<ProtectedRoute><SiteDetails /></ProtectedRoute>} />
 
       <Route path="/" element={<Navigate to="/signup" replace />} />
     </Routes>
