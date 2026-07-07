@@ -9,6 +9,7 @@ import com.github.romankh3.image.comparison.ImageComparison;
 import com.github.romankh3.image.comparison.model.ImageComparisonResult;
 import com.github.romankh3.image.comparison.model.ImageComparisonState;
 import org.openqa.selenium.OutputType;
+import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -46,6 +47,7 @@ public class QaExecutionService {
         logg.info("{} spinning up Chrome for site: {}", Thread.currentThread().getName(), site.getName());
 
         ChromeOptions options = new ChromeOptions();
+        options.setPageLoadStrategy(PageLoadStrategy.EAGER);
         options.addArguments("--headless=new");
         options.addArguments("--window-size=1920,1080");
         options.addArguments("--no-sandbox");
@@ -68,7 +70,7 @@ public class QaExecutionService {
             driver = new ChromeDriver(options);
 
             // 20-Second Kill Switches
-            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(20));
+            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(50));
             driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(15));
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
 
