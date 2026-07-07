@@ -51,7 +51,7 @@ public class QaExecutionService {
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--disable-gpu");
-        options.setBinary("/usr/bin/chromium");
+        options.setBinary("/usr/bin/google-chrome");
 
         // Declare the driver outside so the 'finally' block can see it...
         WebDriver driver = null; 
