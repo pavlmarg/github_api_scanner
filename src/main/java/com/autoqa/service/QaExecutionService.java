@@ -48,6 +48,10 @@ public class QaExecutionService {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--headless=new");
         options.addArguments("--window-size=1920,1080");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--disable-gpu");
+        options.setBinary("/usr/bin/chromium");
 
         // Declare the driver outside so the 'finally' block can see it...
         WebDriver driver = null; 
