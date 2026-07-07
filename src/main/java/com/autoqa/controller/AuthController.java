@@ -68,6 +68,7 @@ public class AuthController {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole("USER");
 
         try {
             userRepository.save(user);
@@ -131,6 +132,7 @@ public class AuthController {
             User newUser = new User();
             newUser.setEmail(email);
             newUser.setProvider(AuthProvider.GOOGLE);
+            newUser.setRole("USER");
             newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
             userRepository.save(newUser);
 

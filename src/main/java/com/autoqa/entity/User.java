@@ -2,8 +2,7 @@ package com.autoqa.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +20,9 @@ public class User {
 
     @Column(unique = true, nullable = false)
     private String email;
+
+    @Column(name = "role", nullable = false)
+    private String role;
 
     @Column(nullable = false)
     @JsonIgnore 
@@ -45,4 +47,6 @@ public class User {
     public void setSites(List<MonitoredSite> sites) { this.sites = sites; }
     public AuthProvider getProvider() { return provider; }
     public void setProvider(AuthProvider provider) { this.provider = provider; }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
 }
