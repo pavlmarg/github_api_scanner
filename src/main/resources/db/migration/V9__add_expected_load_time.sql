@@ -1,0 +1,1 @@
+ALTER TABLE monitored_sites ADD COLUMN expected_load_time_ms INTEGER;
