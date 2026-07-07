@@ -51,6 +51,14 @@ public class QaExecutionService {
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--disable-gpu");
+        options.addArguments("--disable-extensions");
+        options.addArguments("--disable-background-networking");
+        options.addArguments("--disable-default-apps");
+        options.addArguments("--disable-sync");
+        options.addArguments("--disable-translate");
+        options.addArguments("--metrics-recording-only");
+        options.addArguments("--mute-audio");
+        options.addArguments("--no-first-run");
         options.setBinary("/usr/bin/google-chrome");
 
         // Declare the driver outside so the 'finally' block can see it...

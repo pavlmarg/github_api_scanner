@@ -21,4 +21,4 @@ ENV CHROME_BIN=/usr/bin/google-chrome
 
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xmx256m", "-XX:MaxMetaspaceSize=128m", "-jar", "app.jar"]
