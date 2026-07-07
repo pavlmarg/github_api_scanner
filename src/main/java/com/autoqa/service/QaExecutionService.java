@@ -102,6 +102,7 @@ public class QaExecutionService {
             QaLog log = new QaLog();
             log.setMonitoredSite(site);
             log.setActualLoadTimeMs((int) (endTime - startTime));
+            log.setCleanScreenshotPath(actualImageUrl);
 
             // Do we have a baseline?
             if (site.getbaselineScreenshotPath() == null) {

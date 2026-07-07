@@ -34,17 +34,16 @@ const ProtectedRoute = ({ children }) => {
     };
   }, [isAuthenticated, logout, navigate]);
 
-  // --- Force logout on browser back button ---
+// --- Log out only if back navigation lands on the login/signup pages ---
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Push a duplicate history entry so the first "back" press
-    // lands on our handler instead of just navigating the SPA away.
-    window.history.pushState(null, '', window.location.href);
-
     const handlePopState = () => {
-      logout();
-      navigate('/login', { replace: true });
+      const nextPath = window.location.pathname;
+      if (nextPath === '/login' || nextPath === '/signup') {
+        logout();
+        navigate('/login', { replace: true });
+      }
     };
 
     window.addEventListener('popstate', handlePopState);

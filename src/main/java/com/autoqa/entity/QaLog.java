@@ -37,6 +37,11 @@ public class QaLog {
     @Column(name = "executed_at", nullable = false, updatable = false)
     private LocalDateTime executedAt = LocalDateTime.now();
 
+    @Column(name = "clean_screenshot_path")
+    private String cleanScreenshotPath;
+
+
+
     public QaLog() {
     }
 
@@ -96,5 +101,13 @@ public class QaLog {
 
     public void setExecutedAt(LocalDateTime executedAt) {
         this.executedAt = executedAt;
+    }
+
+    public String getCleanScreenshotPath() { 
+        return cleanScreenshotPath; 
+    }
+        
+    public void setCleanScreenshotPath(String cleanScreenshotPath) {
+        this.cleanScreenshotPath = cleanScreenshotPath; 
     }
 }

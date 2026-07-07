@@ -31,10 +31,10 @@ const Dashboard = () => {
   }, []);
 
   // Derived Stats (Passed/Failed can be derived from QaLogs later)
-  const stats = { 
-    active: sites.length, 
-    passed: 0, 
-    failed: 0 
+  const stats = {
+    active: sites.filter((s) => s.isActive).length,
+    passed: sites.filter((s) => s.lastStatus === 'PASS' || s.lastStatus === 'BASELINE_CREATED').length,
+    failed: sites.filter((s) => s.lastStatus === 'FAIL').length,
   };
 
   const handleCreateProject = async (e) => {
@@ -183,36 +183,47 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
-                {sites.slice(0, 5).map((site) => (
+                {sites.slice(0, 5).map((site) => {
+                const statusColor = site.isActive ? 'bg-green-400' : 'bg-orange-400';
+                return (
                   <div key={site.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      {/* Active Blue Indicator */}
-                      <div className="w-2 h-10 rounded-full bg-blue-400"></div>
-                      <div>
+                  <div className="flex items-center gap-4">
+                  <div className={`w-2 h-10 rounded-full ${statusColor}`}></div>
+                    <div>
                         <h3 className="font-bold text-gray-900 text-lg truncate max-w-xs md:max-w-md">
                           {site.url.replace(/^https?:\/\//, '')}
                         </h3>
-                        <p className="text-sm text-gray-500">Scans every {site.scanFrequencyMinutes} mins</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-6">
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-gray-500">Status</p>
-                        <p className="font-extrabold text-blue-600">
-                          Active
-                        </p>
-                      </div>
-                      <Link 
-                        to={`/sites/${site.id}`}
-                        className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors text-sm"
-                      >
-                        View Details
-                      </Link>
+                      <p className="text-sm text-gray-500">Scans every {site.scanFrequencyMinutes} mins</p>
                     </div>
                   </div>
-                ))}
+
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <p className="text-sm font-medium text-gray-500">Status</p>
+            <p className={`font-extrabold ${site.isActive ? 'text-green-600' : 'text-orange-600'}`}>
+              {site.isActive ? 'Active' : 'Paused'}
+            </p>
               </div>
+              {site.lastStatus && site.lastStatus !== 'BASELINE_CREATED' && (
+                <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-lg border ${
+                    site.lastStatus === 'PASS'
+                    ? 'bg-green-50 text-green-700 border-green-200'
+                    : 'bg-red-50 text-red-700 border-red-200'
+                  }`}>
+                  Last: {site.lastStatus}
+                </span>
+                )}
+                <Link
+                  to={`/sites/${site.id}`}
+                  className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors text-sm"
+                >
+                  View Details
+                </Link>
+                </div>
+              </div>
+                );
+              })}
+            </div>
             )}
           </div>
 

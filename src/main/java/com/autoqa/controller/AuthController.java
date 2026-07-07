@@ -56,23 +56,25 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
-    
+
         if (!request.getPassword().equals(request.getConfirmPassword())) {
-        // Wrap the string in a Map so it becomes a JSON object: {"message": "Passwords do not match"}
             return ResponseEntity.badRequest().body(Map.of("message", "Passwords do not match"));
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
-        // Wrap this one as well!
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "An account with this email already exists."));
         }
 
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        userRepository.save(user);
 
-        // You can also wrap your success messages just to be consistent
+        try {
+            userRepository.save(user);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "An account with this email already exists."));
+        }
+
         return ResponseEntity.ok(Map.of("message", "User registered successfully"));
     }
 
@@ -106,7 +108,7 @@ public class AuthController {
     @PostMapping("/google/signup")
     public ResponseEntity<?> googleSignup(@Valid @RequestBody GoogleLoginRequest request) {
         try {
-            // 1. Verify the Google Token
+            // Verify the Google Token
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
                     .setAudience(Collections.singletonList(googleClientId))
                     .build();
@@ -129,7 +131,6 @@ public class AuthController {
             User newUser = new User();
             newUser.setEmail(email);
             newUser.setProvider(AuthProvider.GOOGLE);
-            // Set a random complex password so they can't bypass via standard login
             newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
             userRepository.save(newUser);
 

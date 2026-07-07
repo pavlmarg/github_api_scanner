@@ -10,6 +10,8 @@ public class QaLogDto {
     private Double visualDifferenceScore;
     private String screenshotPath;
     private LocalDateTime executedAt;
+    private Long siteId;
+    private String cleanScreenshotPath;
 
     public QaLogDto(QaLog log) {
         this.id = log.getId();
@@ -18,6 +20,8 @@ public class QaLogDto {
         this.visualDifferenceScore = log.getVisualDifferenceScore();
         this.screenshotPath = log.getScreenshotPath();
         this.executedAt = log.getExecutedAt();
+        this.siteId = log.getMonitoredSite() != null ? log.getMonitoredSite().getId() : null;
+        this.cleanScreenshotPath = log.getCleanScreenshotPath();
     }
 
     public Long getId() {
@@ -66,5 +70,21 @@ public class QaLogDto {
 
     public void setExecutedAt(LocalDateTime executedAt) {
         this.executedAt = executedAt;
+    }
+
+    public Long getSiteId() { 
+        return siteId; 
+    }
+
+    public void setSiteId(Long siteId) { 
+        this.siteId = siteId; 
+    }
+
+    public String getCleanScreenshotPath() { 
+        return cleanScreenshotPath; 
+    }
+    
+    public void setCleanScreenshotPath(String cleanScreenshotPath) { 
+        this.cleanScreenshotPath = cleanScreenshotPath; 
     }
 }

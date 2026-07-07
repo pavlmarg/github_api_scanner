@@ -7,6 +7,8 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "monitored_sites", indexes = {
     @Index(name = "idx_site_user", columnList = "user_id")
+}, uniqueConstraints = {
+    @UniqueConstraint(name = "uq_site_user_url", columnNames = {"user_id", "url"})
 })
 public class MonitoredSite {
 
@@ -17,7 +19,7 @@ public class MonitoredSite {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String url;
 
     @Column(name = "scan_frequency_minutes", nullable = false)

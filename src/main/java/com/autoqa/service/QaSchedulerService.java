@@ -3,6 +3,7 @@ package com.autoqa.service;
 import com.autoqa.entity.MonitoredSite;
 import com.autoqa.repository.MonitoredSiteRepository;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,12 +23,11 @@ public class QaSchedulerService {
         this.executionService = executionService;
     }
 
-    // Run this method exactly every 60,000 milliseconds (1 minute)
-    @Scheduled(fixedRate = 60000)
+    // initialDelay avoids firing the instant the context finishes starting
+    @Scheduled(fixedRate = 60000, initialDelay = 30000)
     public void evaluateAndRunDueTests() {
         log.debug("Scheduler waking up: Checking database for due tests...");
-        
-        // PostgreSQL does 100% of the work
+
         List<MonitoredSite> dueSites = siteRepository.findSitesDueForScan();
 
         if (dueSites.isEmpty()) {
@@ -35,9 +35,16 @@ public class QaSchedulerService {
             return;
         }
 
-        // Only process the sites that actually need it
         for (MonitoredSite site : dueSites) {
-            log.info("Triggering scheduled test for: " + site.getName());
+            try {
+                site.setIsTesting(true);
+                site = siteRepository.saveAndFlush(site);
+            } catch (ObjectOptimisticLockingFailureException e) {
+                log.warn("Site {} already claimed (manual run or duplicate scheduler tick) — skipping.", site.getName());
+                continue;
+            }
+
+            log.info("Triggering scheduled test for: {}", site.getName());
             executionService.runVisualTest(site);
         }
     }

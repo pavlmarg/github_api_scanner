@@ -16,6 +16,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/test")
@@ -33,7 +34,7 @@ public class TestController {
 
     @GetMapping("/sites")
     public List<MonitoredSiteDto> getAllSites() {
-        return siteService.getAllSites().stream().map(MonitoredSiteDto::new).collect(Collectors.toList());
+        return siteService.getAllSitesWithLastStatus();
     }
 
     @GetMapping("/sites/{id}")
@@ -48,8 +49,10 @@ public class TestController {
         try {
             MonitoredSite savedSite = siteService.addSite(request.getUrl(), request.getScanFrequencyMinutes());
             return ResponseEntity.ok(new MonitoredSiteDto(savedSite));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Invalid URL format.");
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid URL format."));
         }
     }
 
@@ -182,6 +185,16 @@ public class TestController {
             return ResponseEntity.ok(new QaLogDto(log));
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/sites/{siteId}/logs/{logId}/set-baseline")
+    public ResponseEntity<?> setBaselineFromLog(@PathVariable Long siteId, @PathVariable Long logId) {
+        try {
+            MonitoredSite updatedSite = siteService.setBaselineFromLog(siteId, logId);
+            return ResponseEntity.ok(new MonitoredSiteDto(updatedSite));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 }

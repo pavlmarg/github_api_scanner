@@ -1,0 +1,1 @@
+ALTER TABLE qa_logs ADD COLUMN clean_screenshot_path TEXT;

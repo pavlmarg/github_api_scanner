@@ -91,7 +91,7 @@ const SiteDetails = () => {
       setEditFrequency(siteData.scanFrequencyMinutes); // Initialize edit form
 
       try {
-        const reportsData = await apiFetch(`/test/sites/${id}/logs`);
+        const reportsData = await apiFetch(`/test/sites/${id}/logs?size=50`);
         const logsArray = reportsData.content || [];
         setReports(Array.isArray(logsArray) ? logsArray.sort((a, b) => b.id - a.id) : []);
       } catch (logErr) {

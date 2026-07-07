@@ -1,5 +1,6 @@
 package com.autoqa.service;
 
+import com.autoqa.dto.MonitoredSiteDto;
 import com.autoqa.entity.MonitoredSite;
 import com.autoqa.entity.QaLog;
 import com.autoqa.entity.User;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class MonitoredSiteService {
@@ -68,16 +70,19 @@ public class MonitoredSiteService {
         String domain = urlString.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)", "").split("[/?#]")[0].split("\\.")[0];
         String name = domain.substring(0, 1).toUpperCase() + domain.substring(1);
 
-        User currentUser = getAuthenticatedUser(); 
+        User currentUser = getAuthenticatedUser();
 
         MonitoredSite site = new MonitoredSite();
         site.setName(name);
         site.setUrl(urlString);
-        
-        site.setScanFrequencyMinutes(intervalMinutes != null ? intervalMinutes : 3600); 
-        site.setUser(currentUser); 
+        site.setScanFrequencyMinutes(intervalMinutes != null ? intervalMinutes : 60);
+        site.setUser(currentUser);
 
-        return siteRepository.save(site);
+        try {
+            return siteRepository.save(site);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new IllegalStateException("You are already monitoring this URL.");
+        }
     }
 
     
@@ -174,5 +179,63 @@ public class MonitoredSiteService {
         
         site.setIsActive(true);
         return siteRepository.save(site);
+    }
+
+    @Transactional
+    public MonitoredSite setBaselineFromLog(Long siteId, Long logId) {
+        MonitoredSite site = getOwnedSiteOrThrow(siteId);
+        QaLog sourceLog = logRepository.findById(logId)
+            .orElseThrow(() -> new RuntimeException("Report not found"));
+
+        if (!sourceLog.getMonitoredSite().getId().equals(site.getId())) {
+            throw new RuntimeException("Report does not belong to this site");
+        }
+
+        String newBaselinePath = sourceLog.getCleanScreenshotPath() != null
+            ? sourceLog.getCleanScreenshotPath()
+            : sourceLog.getScreenshotPath();
+
+        List<QaLog> attachedLogs = logRepository.findByMonitoredSiteOrderByExecutedAtDesc(site);
+
+        for (QaLog log : attachedLogs) {
+            if (log.getScreenshotPath() != null && !log.getScreenshotPath().equals(newBaselinePath)) {
+                storageService.deleteScreenshot(log.getScreenshotPath());
+            }
+            if (log.getCleanScreenshotPath() != null && !log.getCleanScreenshotPath().equals(newBaselinePath)) {
+                storageService.deleteScreenshot(log.getCleanScreenshotPath());
+            }
+        }
+        logRepository.deleteAll(attachedLogs);
+
+        if (site.getbaselineScreenshotPath() != null && !site.getbaselineScreenshotPath().equals(newBaselinePath)) {
+            storageService.deleteScreenshot(site.getbaselineScreenshotPath());
+        }
+
+        site.setbaselineScreenshotPath(newBaselinePath);
+        site = siteRepository.save(site);
+
+        QaLog baselineLog = new QaLog();
+        baselineLog.setMonitoredSite(site);
+        baselineLog.setStatus("BASELINE_CREATED");
+        baselineLog.setScreenshotPath(newBaselinePath);
+        baselineLog.setCleanScreenshotPath(newBaselinePath);
+        baselineLog.setVisualDifferenceScore(0.0);
+        baselineLog.setActualLoadTimeMs(sourceLog.getActualLoadTimeMs());
+        baselineLog.setExecutedAt(java.time.LocalDateTime.now());
+        logRepository.save(baselineLog);
+
+        return site;
+    }
+
+    public List<MonitoredSiteDto> getAllSitesWithLastStatus() {
+        User currentUser = getAuthenticatedUser();
+        List<MonitoredSite> sites = siteRepository.findByUser(currentUser);
+
+        return sites.stream()
+            .map(site -> {
+                String lastStatus = logRepository.findTopByMonitoredSiteOrderByExecutedAtDesc(site).map(QaLog::getStatus).orElse(null);
+                return new MonitoredSiteDto(site, lastStatus);
+            })
+            .collect(Collectors.toList());
     }
 }

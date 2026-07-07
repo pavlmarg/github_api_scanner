@@ -10,6 +10,7 @@ public class MonitoredSiteDto {
     private String baselineScreenshotPath;
     private Boolean isTesting;
     private Boolean isActive;
+    private String lastStatus;
 
     public MonitoredSiteDto(MonitoredSite site) {
         this.id = site.getId();
@@ -19,6 +20,11 @@ public class MonitoredSiteDto {
         this.baselineScreenshotPath = site.getbaselineScreenshotPath();
         this.isTesting = site.getIsTesting();
         this.isActive = site.getIsActive();
+    }
+
+    public MonitoredSiteDto(MonitoredSite site, String lastStatus) {
+        this(site);
+        this.lastStatus = lastStatus;
     }
 
     public Long getId() {
@@ -75,5 +81,13 @@ public class MonitoredSiteDto {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public String getLastStatus() { 
+        return lastStatus; 
+    }
+    
+    public void setLastStatus(String lastStatus) { 
+        this.lastStatus = lastStatus;
     }
 }
