@@ -3,8 +3,11 @@ package com.autoqa.repository;
 import com.autoqa.entity.MonitoredSite;
 import com.autoqa.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query; // Make sure to import this
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -13,6 +16,11 @@ public interface MonitoredSiteRepository extends JpaRepository<MonitoredSite, Lo
     
     List<MonitoredSite> findByUser(User user);
 
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE MonitoredSite s SET s.isTesting = false WHERE s.isTesting = true")
+    int clearAllTestingFlags();
 
     // Query finds sites with NO logs, OR sites where the time since the last log is greater than the frequency limit.
     @Query(value = 
