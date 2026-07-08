@@ -16,6 +16,7 @@ public interface MonitoredSiteRepository extends JpaRepository<MonitoredSite, Lo
     
     List<MonitoredSite> findByUser(User user);
 
+    long countByUser(User user);
 
     @Modifying
     @Transactional

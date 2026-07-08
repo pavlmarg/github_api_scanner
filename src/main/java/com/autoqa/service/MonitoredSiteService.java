@@ -64,13 +64,20 @@ public class MonitoredSiteService {
         }
     }
 
+    private static final int MAX_SITES_PER_USER = 20; 
+
     public MonitoredSite addSite(String urlString, Integer intervalMinutes) throws Exception {
         new URL(urlString).toURI();
 
+        User currentUser = getAuthenticatedUser();
+
+        long currentCount = siteRepository.countByUser(currentUser);
+        if (currentCount >= MAX_SITES_PER_USER) {
+            throw new IllegalStateException("You've reached the maximum of " + MAX_SITES_PER_USER + " monitored sites.");
+        }
+
         String domain = urlString.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)", "").split("[/?#]")[0].split("\\.")[0];
         String name = domain.substring(0, 1).toUpperCase() + domain.substring(1);
-
-        User currentUser = getAuthenticatedUser();
 
         MonitoredSite site = new MonitoredSite();
         site.setName(name);

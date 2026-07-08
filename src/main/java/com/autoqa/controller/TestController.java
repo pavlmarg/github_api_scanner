@@ -7,6 +7,7 @@ import com.autoqa.dto.SiteUpdateRequest;
 import com.autoqa.entity.MonitoredSite;
 import com.autoqa.service.MonitoredSiteService;
 import com.autoqa.service.QaExecutionService;
+import com.autoqa.service.ScanRateLimiterService;
 import com.autoqa.repository.MonitoredSiteRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.Map;
 
 @RestController
@@ -25,11 +25,13 @@ public class TestController {
     private final MonitoredSiteService siteService;
     private final QaExecutionService qaExecutionService;
     private final MonitoredSiteRepository siteRepository;
+    private final ScanRateLimiterService scanRateLimiterService;
 
-    public TestController(MonitoredSiteService siteService, QaExecutionService qaExecutionService, MonitoredSiteRepository siteRepository) {
+    public TestController(MonitoredSiteService siteService, QaExecutionService qaExecutionService, MonitoredSiteRepository siteRepository, ScanRateLimiterService scanRateLimiterService) {
         this.siteService = siteService;
         this.qaExecutionService = qaExecutionService;
         this.siteRepository = siteRepository;
+        this.scanRateLimiterService = scanRateLimiterService;
     }
 
     @GetMapping("/sites")
@@ -59,15 +61,23 @@ public class TestController {
     // Standard Manual Test
     @PostMapping("/sites/{id}/run")
     public ResponseEntity<?> runTestForSite(@PathVariable Long id) {
+        String userEmail = org.springframework.security.core.context.SecurityContextHolder
+            .getContext().getAuthentication().getName();
+
+        if (!scanRateLimiterService.tryConsume(userEmail)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(Map.of("message", "You're triggering scans too quickly. Please wait a moment."));
+        }
+
         MonitoredSite site = siteService.getSiteById(id).orElse(null);
-        
+    
         if (site == null) {
             return ResponseEntity.notFound().build();
         }
 
         if (Boolean.TRUE.equals(site.getIsTesting())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("A test is currently running for this site. Please wait.");
+                .body("A test is currently running for this site. Please wait.");
         }
 
         try {
@@ -75,11 +85,11 @@ public class TestController {
             siteRepository.save(site); 
         } catch (ObjectOptimisticLockingFailureException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("A scheduled test just started for this site. Please wait.");
+                .body("A scheduled test just started for this site. Please wait.");
         }
 
         qaExecutionService.runVisualTest(site);
-        
+    
         return ResponseEntity.ok(new MonitoredSiteDto(site));
     }
 
