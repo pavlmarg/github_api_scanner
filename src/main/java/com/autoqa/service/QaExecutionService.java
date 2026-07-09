@@ -61,7 +61,7 @@ public class QaExecutionService {
         options.addArguments("--metrics-recording-only");
         options.addArguments("--mute-audio");
         options.addArguments("--no-first-run");
-        options.setBinary("/usr/bin/google-chrome");
+        //options.setBinary("/usr/bin/google-chrome");
 
         // Declare the driver outside so the 'finally' block can see it...
         WebDriver driver = null; 
