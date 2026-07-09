@@ -49,7 +49,7 @@
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
-            <version>4.33.0</version>
+            <version>4.44.0</version>
         </dependency>
 
         <dependency>
@@ -124,6 +124,7 @@
             <artifactId>bucket4j_jdk17-core</artifactId>
             <version>8.19.0</version>
         </dependency>
+
 
     </dependencies>
 
